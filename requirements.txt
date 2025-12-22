@@ -1,0 +1,4 @@
+django
+ipykernel
+transformers 
+torch  
