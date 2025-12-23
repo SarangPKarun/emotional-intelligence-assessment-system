@@ -1,4 +1,9 @@
 from .models import LocalEQGenerator
+import re
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+sentimentintensityanalyzer = SentimentIntensityAnalyzer()
+
 generator = LocalEQGenerator()
 
 def generate_scenario(user):
@@ -44,6 +49,65 @@ def validate_length(answer: str) -> tuple[bool, str]:
         return False, "Answer lacks sufficient detail"
 
     return True, "OK"
+
+
+
+STOPWORDS = {
+    "ok", "okay", "yes", "no", "fine", "good", "bad",
+    "nothing", "none", "idk", "dont know", "don't know",
+    "na", "n/a"
+}
+
+def validate_meaningful_content(answer: str) -> tuple[bool, str]:
+    text = answer.lower().strip()
+
+    words = re.findall(r"\b[a-z]+\b", text)
+
+    if not words:
+        return False, "Response does not contain meaningful words"
+
+    unique_words = set(words)
+    if len(unique_words) < 3:
+        return False, "Response is too repetitive or vague"
+
+    if all(word in STOPWORDS for word in unique_words):
+        return False, "Response lacks meaningful content"
+
+    most_common_ratio = max(words.count(w) for w in unique_words) / len(words)
+    if most_common_ratio > 0.6:
+        return False, "Response is overly repetitive"
+
+    if re.fullmatch(r"[a-z]{1,3}", text):
+        return False, "Response appears invalid or random"
+
+    return True, "OK"
+
+def validate_sentiment_coherence(answer: str) -> tuple[bool, str]:
+    scores = sentimentintensityanalyzer.polarity_scores(answer)
+    compound = scores["compound"] 
+
+    if abs(compound) < 0.1:
+        return False, "Response lacks emotional expression"
+
+    if scores["pos"] > 0.4 and scores["neg"] > 0.4:
+        return False, "Response shows conflicting emotions"
+
+    return True, "OK"
+
+def validate_response(answer: str):
+    is_valid, msg = validate_length(answer)
+    if not is_valid:
+        return False, msg
+
+    is_valid, msg = validate_meaningful_content(answer)
+    if not is_valid:
+        return False, msg
+    
+    is_valid, msg = validate_sentiment_coherence(answer)
+    if not is_valid:
+        return False, msg
+
+    return True, "Valid"
 
 
 categories = [

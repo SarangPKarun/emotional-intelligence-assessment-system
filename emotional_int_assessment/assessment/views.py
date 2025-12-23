@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template import loader
 from .models import UserProfile, UserResponse
-from .services import generate_scenario, generate_questions, interpret_eq, validate_length
+from .services import generate_scenario, generate_questions, interpret_eq, validate_response
 
 
 def home(request):
@@ -22,13 +22,20 @@ def assessment(request):
         user = UserProfile.objects.first()
         if not user:
             return redirect("home")
-
-    scenario = generate_scenario(user)
-    request.session["scenario"] = scenario
-    questions = generate_questions(scenario)
-    request.session["questions"] = questions
     
-    return render(request, 'assessment/assessment.html', {"scenario": scenario, "questions": questions, "profile": user})
+    scenario = request.session.get("scenario")
+    questions = request.session.get("questions")
+
+    if not scenario or not questions:
+        scenario = generate_scenario(user)
+        questions = generate_questions(scenario)
+        request.session["scenario"] = scenario
+        request.session["questions"] = questions
+
+    previous_responses = request.session.pop("previous_responses", {})
+    validation_errors = request.session.pop("validation_errors", {})
+    
+    return render(request, 'assessment/assessment.html', {"scenario": scenario, "questions": questions, "profile": user, "previous_responses": previous_responses, "validation_errors": validation_errors})
         
 
 def result(request):
@@ -37,6 +44,25 @@ def result(request):
         return redirect("home")
 
     if request.method == "POST":
+        questions = request.session.get("questions", [])
+
+        errors = {}
+        responses_data = {}
+
+        for idx, question in enumerate(questions, start=1):
+            answer = request.POST.get(f"response_{idx}", "").strip()
+
+            responses_data[str(idx)] = answer
+
+            is_valid, message = validate_response(answer)
+            if not is_valid:
+                errors[str(idx)] = message
+        print(errors)
+        if errors:
+            request.session["validation_errors"] = errors
+            request.session["previous_responses"] = responses_data
+            return redirect("assessment")
+
         scenario = request.session.get("scenario")
         questions = request.session.get("questions", [])
 
@@ -60,6 +86,8 @@ def result(request):
 
         request.session.pop("scenario", None)
         request.session.pop("questions", None)
+        request.session.pop("previous_responses", None)
+        request.session.pop("validation_errors", None)
 
         return redirect("result")
 

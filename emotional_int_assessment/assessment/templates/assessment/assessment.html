@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load dict_extras %}
+
 {% block title %}Assessment{% endblock %}
 
 {% block content %}
@@ -58,7 +60,13 @@
                 <textarea id="question_{{ forloop.counter }}" name="response_{{ forloop.counter }}" rows="1" required
                     placeholder="Type your response here..."
                     class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-800
-                           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+                           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none">{{ previous_responses|get_item:forloop.counter }}</textarea>
+
+                {% if validation_errors|get_item:forloop.counter %}
+                <p class="error-text">
+                    ⚠ {{ validation_errors|get_item:forloop.counter }}
+                </p>
+                {% endif %}
 
             </div>
             {% endfor %}
