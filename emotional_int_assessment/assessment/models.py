@@ -2,6 +2,8 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from huggingface_hub import InferenceClient
 from django.conf import settings
+from collections import defaultdict
+
 
 class UserProfile(models.Model):
     age = models.PositiveIntegerField(validators=[MinValueValidator(10), MaxValueValidator(100)], null=True, blank=True)
@@ -30,9 +32,10 @@ class UserResponse(models.Model):
     answer = models.TextField()
 
     # sentiment = models.CharField(max_length=20, null=True, blank=True)
-    sentiment_label = models.CharField(max_length=10, null=True, blank=True)
-    sentiment_score = models.FloatField(null=True, blank=True)
-    emotion_intensity = models.FloatField(null=True, blank=True)
+    # sentiment_label = models.CharField(max_length=10, null=True, blank=True)
+    # sentiment_score = models.FloatField(null=True, blank=True)
+    # dominant_emotion = models.CharField(max_length=10, null=True, blank=True)
+    # emotion_intensity = models.FloatField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -151,3 +154,195 @@ class LocalEQGenerator:
                 questions.append(line.split(".", 1)[1].strip())
 
         return questions
+
+
+class LocalEQAnalyzer:
+    """
+    Handles:
+    - Emotion & sentiment analysis
+    - Emotional intensity computation
+    - EQ category scoring
+    - Overall EQ aggregation
+    - Result interpretation
+    """
+
+    def __init__(self):
+        print("Initializing EQ analysis engine (HF API)...")
+
+        self.client = InferenceClient(
+            provider="hf-inference",
+            api_key=settings.HF_TOKEN,
+        )
+
+        self.eq_categories = {
+            1: "Self-Awareness",
+            2: "Emotional Resilience",
+            3: "Conflict Resolution",
+            4: "Empathy",
+            5: "Social Skills",
+        }
+
+        print("EQ analyzer ready.")
+
+
+    def analyze_emotion(self, text: str) -> dict:
+        """
+        Uses HF emotion model to detect dominant emotion and emotional intensity.
+        """
+
+        result = self.client.text_classification(
+            text,
+            model="j-hartmann/emotion-english-distilroberta-base",
+        )
+
+        dominant = max(result, key=lambda x: x["score"])
+
+        return {
+            "dominant_emotion": dominant["label"],
+            "emotion_intensity": dominant["score"],  
+            "emotion_distribution": result,
+        }
+
+    def analyze_sentiment(self, text: str) -> dict:
+        """
+        Uses HF sentiment model to detect polarity.
+        """
+
+        result = self.client.text_classification(
+            text,
+            model="tabularisai/multilingual-sentiment-analysis",
+        )
+        print("analyze_sentiment result: ", result)
+        sentiment = result[0]
+
+        return {
+            "sentiment_label": sentiment["label"],      
+            "sentiment_confidence": sentiment["score"], 
+        }
+
+    def analyze_response(self, text: str) -> dict:
+        """
+        Runs emotion + sentiment analysis together.
+        """
+
+        emotion = self.analyze_emotion(text)
+        sentiment = self.analyze_sentiment(text)
+
+        return {
+            **emotion,
+            **sentiment,
+        }
+
+    def compute_category_score(
+        self,
+        sentiment_label: str,
+        emotion_intensity: float,
+        gender: str | None = None,
+        age: int | None = None,
+    ) -> int:
+
+
+        base = 50  
+
+        if sentiment_label == "positive":
+            base += 15
+        elif sentiment_label == "negative":
+            base -= 10
+
+        base += emotion_intensity * 30  # max +30
+
+        if gender:
+            g_lower = gender.lower()
+            if g_lower == "female":
+                base += 2
+            elif g_lower == "male":
+                base += 0  
+            elif g_lower == "non-binary":
+                base += 1
+
+        if age:
+            try:
+                age_val = int(age)
+                if age_val > 50:
+                    base += 5
+                elif age_val > 30:
+                    base += 2
+            except (ValueError, TypeError):
+                pass
+
+        return max(0, min(100, round(base)))
+
+
+    def aggregate_eq_scores(self, responses: list, gender: str | None, age: int | None = None):
+        """
+        responses: list of dicts with analysis data
+        """
+
+        category_scores = defaultdict(list)
+
+        for idx, r in enumerate(responses, start=1):
+            category = self.eq_categories.get(idx)
+            if not category:
+                continue
+
+            score = self.compute_category_score(
+                sentiment_label=r["sentiment_label"],
+                emotion_intensity=r["emotion_intensity"],
+                gender=gender,
+                age=age,
+            )
+
+            category_scores[category].append(score)
+
+        return {
+            cat: round(sum(scores) / len(scores))
+            for cat, scores in category_scores.items()
+        }
+
+
+    def compute_overall_eq(self, category_scores: dict) -> int:
+        if not category_scores:
+            return 0
+        return round(sum(category_scores.values()) / len(category_scores))
+
+
+    def interpret_eq(self, overall_score: int) -> dict:
+        if overall_score < 40:
+            return {
+                "level": "Low EQ",
+                "message": "You may find it challenging to recognize and regulate emotions under pressure.",
+                "color": "red",
+            }
+        elif overall_score < 70:
+            return {
+                "level": "Average EQ",
+                "message": "You demonstrate reasonable emotional awareness and adaptability.",
+                "color": "orange",
+            }
+        else:
+            return {
+                "level": "High EQ",
+                "message": "You show strong emotional intelligence and emotional resilience.",
+                "color": "green",
+            }
+
+
+    def evaluate(self, answers: list[str], gender: str | None = None, age: int | None = None) -> dict:
+        """
+        answers: list of user responses in question order
+        """
+
+        analyzed = [self.analyze_response(a) for a in answers]
+
+        category_scores = self.aggregate_eq_scores(analyzed, gender, age)
+        overall_eq = self.compute_overall_eq(category_scores)
+        interpretation = self.interpret_eq(overall_eq)
+
+        return {
+            "overall_eq": overall_eq,
+            "eq_level": interpretation["level"],
+            "feedback": interpretation["message"],
+            "eq_color": interpretation["color"],
+            "category_scores": category_scores,
+            "responses_analysis": analyzed,  
+        }

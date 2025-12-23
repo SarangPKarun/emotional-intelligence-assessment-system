@@ -55,12 +55,16 @@
                 </h2>
 
                 <div class="text-5xl font-bold text-gray-900 md:text-6xl">
-                    {{ overall_score }}
+                    {{ eq_result.overall_score }}
                     <span class="text-xl text-gray-400">/100</span>
                 </div>
 
                 <p class="mt-4 text-lg font-medium text-indigo-600">
-                    {{ feedback }}
+                    {{ eq_result.feedback }}
+                </p>
+
+                <p class="mt-2 text-sm font-semibold text-{{ eq_result.eq_color }}-600">
+                    {{ eq_result.eq_level }}
                 </p>
             </div>
 
@@ -68,6 +72,55 @@
             <div class="relative h-72 w-full md:h-96">
                 <canvas id="eqChart"></canvas>
             </div>
+
+            <hr class="my-8">
+
+            <h3 class="mb-4 text-xl font-semibold text-gray-800">
+                Detailed Emotional Analysis
+            </h3>
+
+            <div class="space-y-6">
+                {% for r in eq.responses_analysis %}
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+
+                    <p class="mb-2 text-sm font-semibold text-indigo-600">
+                        Question {{ forloop.counter }}
+                    </p>
+
+                    <p class="mb-3 text-gray-700 italic">
+                        "{{ r.question }}"
+                    </p>
+
+                    <p class="mb-2 text-sm text-gray-800">
+                        <strong>Answer:</strong> {{ r.answer }}
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium">Dominant Emotion:</span>
+                            {{ r.dominant_emotion|title }}
+                        </div>
+
+                        <div>
+                            <span class="font-medium">Emotion Intensity:</span>
+                            {{ r.emotion_intensity|floatformat:2 }}
+                        </div>
+
+                        <div>
+                            <span class="font-medium">Sentiment:</span>
+                            {{ r.sentiment_label }}
+                        </div>
+
+                        <div>
+                            <span class="font-medium">EQ Category:</span>
+                            {{ r.eq_category }}
+                        </div>
+                    </div>
+
+                </div>
+                {% endfor %}
+            </div>
+
 
             <!-- CTA -->
             <div class="mt-8 text-center">
@@ -85,7 +138,7 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-{{ categories|json_script:"categories-data" }}
+{{ eq_result.category_scores|json_script:"categories-data" }}
 
 <script>
     const categoriesData = JSON.parse(
