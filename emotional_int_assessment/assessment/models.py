@@ -124,6 +124,8 @@ class LocalEQGenerator:
                     "4. Empathy (understanding others' emotions)\n"
                     "5. Social skills (communication and teamwork)\n\n"
                     "Rules:\n"
+                    "- Each question MUST be 15 words or fewer\n"
+                    "- Each question MUST be ONE sentence only\n"
                     "- Each question must clearly align with its assigned EQ dimension\n"
                     "- Encourage self-reflection\n"
                     "- Do NOT provide advice or guidance\n"
@@ -138,7 +140,7 @@ class LocalEQGenerator:
 
         response = self.client.chat.completions.create(
             messages=messages,
-            max_tokens=180,
+            max_tokens=250,
             temperature=0.6,
             top_p=0.9
         )

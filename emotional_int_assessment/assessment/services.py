@@ -1,6 +1,7 @@
 from .models import LocalEQGenerator, LocalEQAnalyzer
 import re
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import spacy
 
 sentimentintensityanalyzer = SentimentIntensityAnalyzer()
 
@@ -82,19 +83,18 @@ def validate_meaningful_content(answer: str) -> tuple[bool, str]:
 
     return True, "OK"
 
-def validate_sentiment_coherence(answer: str) -> tuple[bool, str]:
-    scores = sentimentintensityanalyzer.polarity_scores(answer)
-    compound = scores["compound"] 
+# def validate_sentiment_coherence(answer: str) -> tuple[bool, str]:
+#     scores = sentimentintensityanalyzer.polarity_scores(answer)
+#     compound = scores["compound"] 
 
-    if abs(compound) < 0.1:
-        return False, "Response lacks emotional expression"
+#     if abs(compound) < 0.1:
+#         return False, "Response lacks emotional expression"
 
-    if scores["pos"] > 0.4 and scores["neg"] > 0.4:
-        return False, "Response shows conflicting emotions"
+#     if scores["pos"] > 0.4 and scores["neg"] > 0.4:
+#         return False, "Response shows conflicting emotions"
 
-    return True, "OK"
+#     return True, "OK"
 
-import re
 
 COMMON_VERBS = {
     "am", "is", "are", "was", "were", "be", "being", "been",
@@ -114,22 +114,20 @@ CONNECTORS = {
     "so", "but", "and", "although", "however"
 }
 
+
+nlp = spacy.load("en_core_web_sm")
+
 def validate_sentence_coherence(answer: str) -> tuple[bool, str]:
-    text = answer.lower().strip()
+    doc = nlp(answer)
 
-    words = re.findall(r"\b[a-z]+\b", text)
+    has_verb = any(token.pos_ == "VERB" for token in doc)
+    has_subject = any(token.dep_ in ("nsubj", "nsubjpass") for token in doc)
 
-    if len(words) < 6:
-        return False, "Response is not expressed as a complete thought"
-
-    if not any(word in COMMON_VERBS for word in words):
-        return False, "Response lacks action or experience description"
-
-    if not any(word in CONNECTORS for word in words):
-        if len(words) < 10:
-            return False, "Response lacks sentence structure"
+    if not has_subject or not has_verb:
+        return False, "Response lacks clear action or experience"
 
     return True, "OK"
+
 
 def validate_response(answer: str):
     is_valid, msg = validate_length(answer)
@@ -144,9 +142,9 @@ def validate_response(answer: str):
     if not is_valid:
         return False, msg
     
-    is_valid, msg = validate_sentiment_coherence(answer)
-    if not is_valid:
-        return False, msg
+    # is_valid, msg = validate_sentiment_coherence(answer)
+    # if not is_valid:
+    #     return False, msg
 
     return True, "Valid"
 

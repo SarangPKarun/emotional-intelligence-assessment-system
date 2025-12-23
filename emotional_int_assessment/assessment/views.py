@@ -27,6 +27,10 @@ def assessment(request):
     if request.method == "POST":
         UserProfile.objects.all().delete()
         
+        # Clear previous session data to ensure new scenario generation
+        request.session.pop("scenario", None)
+        request.session.pop("questions", None)
+        
         user = UserProfile.objects.create(
             age=request.POST.get("age"),
             gender=request.POST.get("gender"),
@@ -113,13 +117,23 @@ def result(request):
     que = [response.question for response in responses]
     ans = [response.answer for response in responses]
     eq_result = eq_evaluation(ans, user.gender, user.age)
-    print(eq_result)
+    print("EQ Result: ", eq_result)
+    print("User: ", user)
+    print("Answers: ", ans)
+    print("Questions: ", que)
+
+    # Inject question and answer into the analysis results for the template
+    if "responses_analysis" in eq_result:
+        for i, analysis in enumerate(eq_result["responses_analysis"]):
+            analysis["question"] = que[i] if i < len(que) else ""
+            analysis["answer"] = ans[i] if i < len(ans) else ""
 
     context = {
         "profile": user,
         "eq_result": eq_result,
         "questions": que,
         "answers": ans,
+        "scenario": user.scenario,
     }
 
     # overall_score = 80

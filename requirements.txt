@@ -7,3 +7,4 @@ hf_xet
 huggingface_hub
 python-dotenv
 vaderSentiment
+spacy

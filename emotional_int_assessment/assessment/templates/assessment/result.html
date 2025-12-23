@@ -55,7 +55,7 @@
                 </h2>
 
                 <div class="text-5xl font-bold text-gray-900 md:text-6xl">
-                    {{ eq_result.overall_score }}
+                    {{ eq_result.overall_eq }}
                     <span class="text-xl text-gray-400">/100</span>
                 </div>
 
@@ -75,12 +75,24 @@
 
             <hr class="my-8">
 
+            <div class="mb-10 rounded-xl border border-indigo-200 bg-indigo-50 p-6">
+
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                    Assessment Scenario
+                </p>
+
+                <p class="text-gray-800 leading-relaxed text-base md:text-lg">
+                    {{ scenario }}
+                </p>
+
+            </div>
+
             <h3 class="mb-4 text-xl font-semibold text-gray-800">
                 Detailed Emotional Analysis
             </h3>
 
             <div class="space-y-6">
-                {% for r in eq.responses_analysis %}
+                {% for r in eq_result.responses_analysis %}
                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
 
                     <p class="mb-2 text-sm font-semibold text-indigo-600">
@@ -111,10 +123,10 @@
                             {{ r.sentiment_label }}
                         </div>
 
-                        <div>
+                        <!-- <div>
                             <span class="font-medium">EQ Category:</span>
                             {{ r.eq_category }}
-                        </div>
+                        </div> -->
                     </div>
 
                 </div>
