@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% block title %}Home{% endblock %}
 {% block content %}
 
 <div class="flex flex-col items-center justify-center h-full bg-gradient-to-br from-indigo-50 to-purple-100 px-4">
@@ -11,7 +11,8 @@
         Please provide a few basic details to generate a personalized assessment for you.
     </p>
 
-    <form method="post" class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+    <form action="/assessment/" method="post"
+        class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-6 border border-gray-200">
 
         {% csrf_token %}
 

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block title %}Assessment{% endblock %}
 
 {% block content %}
 
@@ -36,7 +37,6 @@
 
         </div>
 
-        <!-- Scenario Section -->
         <div class="mb-8 border-b border-gray-200 pb-4">
             <span class="block text-xs font-semibold uppercase tracking-wider text-indigo-600">
                 Scenario
@@ -46,8 +46,7 @@
             </p>
         </div>
 
-        <!-- Questions Form -->
-        <form method="post">
+        <form action="{% url 'result' %}" method="post">
             {% csrf_token %}
 
             {% for question in questions %}
@@ -64,7 +63,6 @@
             </div>
             {% endfor %}
 
-            <!-- Submit -->
             <button type="submit" class="w-full mt-4 rounded-lg bg-indigo-600 text-white font-medium py-2.5
                        hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition">
                 Submit Responses

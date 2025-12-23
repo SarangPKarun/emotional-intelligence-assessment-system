@@ -1,18 +1,49 @@
-from django.db import models
+from .models import LocalEQGenerator
+generator = LocalEQGenerator()
 
-class UserProfile(models.Model):
-    age = models.IntegerField()
-    gender = models.CharField(max_length=10)
-    profession = models.CharField(max_length=50)
-    created_at = models.DateTimeField(auto_now_add=True)
+def generate_scenario(user):
+    """
+    Calls the EQ generator class and returns scenario text
+    """
+    print("User profile:", user)
+    user_profile = {
+        "age": user.age,
+        "gender": user.gender,
+        "profession": user.profession
+    }
 
+    scenario = generator.generate_scenario(user_profile)
 
-class UserResponse(models.Model):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    question = models.TextField()
-    answer = models.TextField()
-    sentiment = models.CharField(max_length=20)
-    emotion_score = models.FloatField()
+    return scenario
+
+def generate_questions(scenario):
+    """
+    Calls the EQ generator class and returns questions in list 
+    """
+    print("User scenario:", scenario)
+
+    questions = generator.generate_questions(scenario)
+
+    return questions
+
+def validate_length(answer: str) -> tuple[bool, str]:
+    if not answer:
+        print("Answer is empty")
+        return False, "Answer is empty"
+
+    if len(answer) < 15:
+        print("Answer is too short")
+        return False, "Answer is too short"
+
+    if len(answer) > 500:
+        print("Answer is too long")
+        return False, "Answer is too long"
+
+    if len(answer.split()) < 4:
+        print("Answer lacks sufficient detail")
+        return False, "Answer lacks sufficient detail"
+
+    return True, "OK"
 
 
 categories = [

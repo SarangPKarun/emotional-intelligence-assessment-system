@@ -1,49 +1,86 @@
 {% extends 'base.html' %}
+{% block title %}Result{% endblock %}
 
 {% block content %}
+<div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-100 px-4 py-10">
+    <div class="w-full max-w-6xl rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
 
-<div class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 px-4">
+        <!-- Profile Summary -->
+        <div class="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4 sm:grid-cols-3">
 
-    <p class="pt-4 pb-8 max-w-4xl text-center text-lg md:text-xl font-medium text-gray-700">
-        Here’s a detailed overview of your
-        <span class="text-indigo-600 font-semibold">Emotional Intelligence Assessment</span>.
-        <br class="hidden sm:block">
-        Explore your strengths across key emotional dimensions.
-    </p>
-
-    <div class="max-w-3xl w-full bg-white rounded-xl shadow-lg p-6 md:p-8 border border-gray-200">
-
-        <div class="text-center mb-8">
-            <h2 class="text-2xl md:text-3xl font-semibold text-indigo-700 mb-2">
-                Assessment Results
-            </h2>
-
-            <div class="text-5xl md:text-6xl font-bold text-gray-900">
-                {{ overall_score }}
-                <span class="text-xl text-gray-400">/100</span>
+            <div class="text-center sm:text-left">
+                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                    Age
+                </p>
+                <p class="text-sm font-medium text-gray-800">
+                    {{ profile.age|default:"—" }}
+                </p>
             </div>
 
-            <p class="mt-4 text-lg font-medium text-indigo-600">
-                {{ feedback }}
-            </p>
+            <div class="text-center sm:text-left">
+                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                    Gender
+                </p>
+                <p class="text-sm font-medium text-gray-800">
+                    {{ profile.gender|default:"—" }}
+                </p>
+            </div>
+
+            <div class="text-center sm:text-left">
+                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                    Profession
+                </p>
+                <p class="text-sm font-medium text-gray-800">
+                    {{ profile.profession|default:"—" }}
+                </p>
+            </div>
         </div>
 
-        <div class="relative w-full h-72 md:h-96">
-            <canvas id="eqChart"></canvas>
-        </div>
+        <!-- Intro Text -->
+        <p class="mx-auto max-w-4xl pb-8 pt-4 text-center text-lg font-medium text-gray-700 md:text-xl">
+            Here’s a detailed overview of your
+            <span class="font-semibold text-indigo-600">
+                Emotional Intelligence Assessment
+            </span>.
+            <br class="hidden sm:block">
+            Explore your strengths across key emotional dimensions.
+        </p>
 
-        <div class="mt-8 text-center">
-            <a href="{% url 'home' %}" rel="noopener noreferrer">
-                <button class="inline-flex items-center rounded-lg bg-indigo-600 text-white font-medium px-6 py-2.5
-                           hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition">
+        <!-- Results Card -->
+        <div class="mx-auto w-full max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-lg md:p-8">
+
+            <div class="mb-8 text-center">
+                <h2 class="mb-2 text-2xl font-semibold text-indigo-700 md:text-3xl">
+                    Assessment Results
+                </h2>
+
+                <div class="text-5xl font-bold text-gray-900 md:text-6xl">
+                    {{ overall_score }}
+                    <span class="text-xl text-gray-400">/100</span>
+                </div>
+
+                <p class="mt-4 text-lg font-medium text-indigo-600">
+                    {{ feedback }}
+                </p>
+            </div>
+
+            <!-- Chart -->
+            <div class="relative h-72 w-full md:h-96">
+                <canvas id="eqChart"></canvas>
+            </div>
+
+            <!-- CTA -->
+            <div class="mt-8 text-center">
+                <a href="{% url 'home' %}" class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-2.5 font-medium text-white
+                          transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300">
                     Take Assessment Again
-                </button>
-            </a>
+                </a>
+            </div>
         </div>
 
     </div>
-
 </div>
+
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
