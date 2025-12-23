@@ -2,3 +2,8 @@ django
 ipykernel
 transformers 
 torch  
+accelerate
+hf_xet
+huggingface_hub
+python-dotenv
+vaderSentiment

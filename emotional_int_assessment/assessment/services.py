@@ -94,12 +94,53 @@ def validate_sentiment_coherence(answer: str) -> tuple[bool, str]:
 
     return True, "OK"
 
+import re
+
+COMMON_VERBS = {
+    "am", "is", "are", "was", "were", "be", "being", "been",
+    "feel", "felt", "feels",
+    "think", "thought",
+    "handle", "handled",
+    "manage", "managed",
+    "experience", "experienced",
+    "face", "faced",
+    "deal", "dealt",
+    "struggle", "struggled",
+    "work", "worked"
+}
+
+CONNECTORS = {
+    "because", "when", "while", "after", "before",
+    "so", "but", "and", "although", "however"
+}
+
+def validate_sentence_coherence(answer: str) -> tuple[bool, str]:
+    text = answer.lower().strip()
+
+    words = re.findall(r"\b[a-z]+\b", text)
+
+    if len(words) < 6:
+        return False, "Response is not expressed as a complete thought"
+
+    if not any(word in COMMON_VERBS for word in words):
+        return False, "Response lacks action or experience description"
+
+    if not any(word in CONNECTORS for word in words):
+        if len(words) < 10:
+            return False, "Response lacks sentence structure"
+
+    return True, "OK"
+
 def validate_response(answer: str):
     is_valid, msg = validate_length(answer)
     if not is_valid:
         return False, msg
 
     is_valid, msg = validate_meaningful_content(answer)
+    if not is_valid:
+        return False, msg
+
+    is_valid, msg = validate_sentence_coherence(answer)
     if not is_valid:
         return False, msg
     
@@ -109,14 +150,31 @@ def validate_response(answer: str):
 
     return True, "Valid"
 
+def analyze_emotion(answer: str):
+    scores = sentimentintensityanalyzer.polarity_scores(answer)
+    compound = scores["compound"]
 
-categories = [
-            "Self-Awareness", 
-            "Emotional Resilience", 
-            "Conflict Resolution", 
-            "Empathy", 
-            "Social Skills"
-        ]
+    if compound > 0.1:
+        label = "positive"
+    elif compound < -0.1:
+        label = "negative"
+    else:
+        label = "neutral"
+
+    return {
+        "sentiment_label": label,
+        "sentiment_score": compound,
+        "emotion_intensity": abs(compound)
+    }
+
+
+eq_categories = {
+    1: "Self-Awareness",
+    2: "Emotional Resilience",
+    3: "Conflict Resolution",
+    4: "Empathy",
+    5: "Social Skills",
+}
 
 def interpret_eq(score):
     if score < 40:

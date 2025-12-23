@@ -9,4 +9,4 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(UserResponse)
 class UserResponseAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "question","answer", "sentiment", "emotion_score", "created_at")
+    list_display = ("id", "user", "question","answer", "sentiment_label","sentiment_score", "emotion_intensity", "created_at")

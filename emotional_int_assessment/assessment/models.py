@@ -29,8 +29,10 @@ class UserResponse(models.Model):
     question = models.TextField()
     answer = models.TextField()
 
-    sentiment = models.CharField(max_length=20, null=True, blank=True)
-    emotion_score = models.FloatField(null=True, blank=True)
+    # sentiment = models.CharField(max_length=20, null=True, blank=True)
+    sentiment_label = models.CharField(max_length=10, null=True, blank=True)
+    sentiment_score = models.FloatField(null=True, blank=True)
+    emotion_intensity = models.FloatField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -112,9 +114,15 @@ class LocalEQGenerator:
                     "Based on the following workplace scenario, generate exactly 5 "
                     "open-ended reflective questions.\n\n"
                     f"Scenario:\n{scenario}\n\n"
+                    "Each question must focus on the following EQ dimensions IN ORDER:\n"
+                    "1. Self-awareness (recognizing own emotions)\n"
+                    "2. Emotional resilience (handling stress and pressure)\n"
+                    "3. Conflict resolution (handling disagreements)\n"
+                    "4. Empathy (understanding others' emotions)\n"
+                    "5. Social skills (communication and teamwork)\n\n"
                     "Rules:\n"
-                    "- Questions must encourage self-reflection\n"
-                    "- Focus on emotional awareness, motivation, conflict handling, and resilience\n"
+                    "- Each question must clearly align with its assigned EQ dimension\n"
+                    "- Encourage self-reflection\n"
                     "- Do NOT provide advice or guidance\n"
                     "- Do NOT include answers or examples\n"
                     "- Do NOT include multiple choice options\n"
